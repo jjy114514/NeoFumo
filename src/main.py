@@ -1,24 +1,38 @@
-from src.speech_recognition import SpeechRecognition
-from src.hardware_interface import HardwareInterface
-from src.database import Database
-from src.ai_chat import AIChat
-from src.knowledge_query import KnowledgeQuery
+import pyaudio
+import wave
 
-def main():
-    sr = SpeechRecognition()
-    hw = HardwareInterface()
-    db = Database()
-    ai = AIChat(api_key='your_openai_api_key')
-    kq = KnowledgeQuery()
+def record_audio(output_filename, duration=5, rate=44100, chunk=1024, input_device_index=None):
+    audio = pyaudio.PyAudio()
 
-    for audio in sr.stream_audio():
-        text, speaker = sr.listen_and_recognize()
-        if text and speaker:
-            db.insert_conversation(speaker, text)
-            if ai.should_respond(text):
-                response = ai.ask_ai(text)
-                hw.play_audio(response)
-                hw.display_text(response)
+    # Start recording
+    stream = audio.open(format=pyaudio.paInt16, channels=1,
+                        rate=rate, input=True,
+                        input_device_index=input_device_index,
+                        frames_per_buffer=chunk)
+    print("Recording...")
+
+    frames = []
+
+    for _ in range(0, int(rate / chunk * duration)):
+        data = stream.read(chunk)
+        frames.append(data)
+
+    print("Finished recording.")
+
+    # Stop recording
+    stream.stop_stream()
+    stream.close()
+    audio.terminate()
+
+    # Save the recorded data as a WAV file
+    wf = wave.open(output_filename, 'wb')
+    wf.setnchannels(1)
+    wf.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
+    wf.setframerate(rate)
+    wf.writeframes(b''.join(frames))
+    wf.close()
 
 if __name__ == "__main__":
-    main()
+    output_filename = "output.wav"
+    input_device_index = 1  # 设置为所需的音频输入设备索引
+    record_audio(output_filename, input_device_index=input_device_index)
