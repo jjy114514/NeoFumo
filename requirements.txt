@@ -1,4 +1,4 @@
 openai
 pyaudio
-speechrecognition
 sqlite3
+vosk
