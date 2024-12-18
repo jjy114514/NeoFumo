@@ -29,10 +29,8 @@ def transcribe_audio_to_text_vosk(wav_file_path, model_path):
 
 # 要分析的音频文件路径
 input_wav_path = "input_Chinese.wav"
-# input_wav_path = "input_English.wav"
 # Kaldi模型解压后的目录路径（确保这个模型是为44.1kHz采样率训练的）
-model_path = "./vosk-model-small-cn-0.22"
-# model_path = "./vosk-model-small-en-us-0.15"
+model_path = "./speech-recog/vosk-model-small-cn-0.22"
 
 # 执行识别
 transcribed_text = transcribe_audio_to_text_vosk(input_wav_path, model_path)
