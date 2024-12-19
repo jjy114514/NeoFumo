@@ -162,4 +162,5 @@ cython_debug/
 #.idea/
 
 speech-recog/
-config.py
+src/config.py
+*.wav

@@ -1,6 +1,6 @@
 from openai import OpenAI
 import json
-from ..config import BASE_URL, API_KEY
+from config import BASE_URL, API_KEY
 
 
 client = OpenAI(
@@ -32,7 +32,7 @@ while True:
     
     messages.append({"role": "user", "content": msg})
     completion = client.chat.completions.create(
-        model="o1-mini",
+        model="gpt-4o",
         messages=messages
     )
     reply = completion.choices[0].message.content
