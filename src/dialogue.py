@@ -8,7 +8,7 @@ import json
 from openai import OpenAI
 from config import BASE_URL, API_KEY
 
-def record_audio_with_silence_detection(output_filename, rate=44100, chunk=1024, silence_threshold=1000, silence_duration=1, input_device_index=None):
+def record_audio_with_silence_detection(rate=44100, chunk=1024, silence_threshold=1000, silence_duration=1, input_device_index=None):
     audio = pyaudio.PyAudio()
     stream = audio.open(format=pyaudio.paInt16, channels=1,
                         rate=rate, input=True,
@@ -32,33 +32,22 @@ def record_audio_with_silence_detection(output_filename, rate=44100, chunk=1024,
     stream.stop_stream()
     stream.close()
     audio.terminate()
-    wf = wave.open(output_filename, 'wb')
-    wf.setnchannels(1)
-    wf.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
-    wf.setframerate(rate)
-    wf.writeframes(b''.join(frames))
-    wf.close()
+    return b''.join(frames)
 
-def transcribe_audio_to_text_vosk(wav_file_path, model_path):
+def transcribe_audio_to_text_vosk(audio_data, model_path, rate=44100):
     model = Model(model_path)
-    recognizer = KaldiRecognizer(model, 44100)
-    with wave.open(wav_file_path, "rb") as wf:
-        while True:
-            data = wf.readframes(4000)
-            if len(data) == 0:
-                break
-            recognizer.AcceptWaveform(data)
-        result = recognizer.FinalResult()
-        text = json.loads(result).get('text', '')
-        return text
+    recognizer = KaldiRecognizer(model, rate)
+    recognizer.AcceptWaveform(audio_data)
+    result = recognizer.FinalResult()
+    text = json.loads(result).get('text', '')
+    return text
 
 client = OpenAI(
     base_url=BASE_URL,
     api_key=API_KEY
 )
 
-def get_ai_response(prompt):
-    
+def get_ai_response(prompt):    
     completion = client.chat.completions.create(
         model="gpt-4o",
         messages=[{ "role": "user", "content": prompt }]
@@ -78,11 +67,10 @@ def speak_text(text):
 
 if __name__ == "__main__":
     while True:
-        output_filename = "input.wav"
         input_device_index = None
-        record_audio_with_silence_detection(output_filename, silence_threshold=500, silence_duration=1, input_device_index=input_device_index)
+        audio_data = record_audio_with_silence_detection(silence_threshold=500, silence_duration=1, input_device_index=input_device_index)
         model_path = "../speech-recog/vosk-model-small-en-us-0.15"
-        transcribed_text = transcribe_audio_to_text_vosk(output_filename, model_path)
+        transcribed_text = transcribe_audio_to_text_vosk(audio_data, model_path)
         print("User said:", transcribed_text)
         if not transcribed_text:
             continue
